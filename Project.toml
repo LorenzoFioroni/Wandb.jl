@@ -1,0 +1,13 @@
+name = "WandbLogger"
+uuid = "62d4785e-023b-4fe3-a3fa-f427ba577678"
+authors = ["Lorenzo Fioroni <lor.fioroni@gmail.com>"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.10.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
