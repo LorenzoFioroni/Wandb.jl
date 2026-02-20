@@ -1,9 +1,23 @@
-name = "WandbLogger"
+name = "Wandb"
 uuid = "62d4785e-023b-4fe3-a3fa-f427ba577678"
-authors = ["Lorenzo Fioroni <lor.fioroni@gmail.com>"]
 version = "1.0.0-DEV"
+authors = ["Lorenzo Fioroni <lor.fioroni@gmail.com>"]
+
+[deps]
+Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+MD5 = "6ac74813-4b46-53a4-afec-0b5dc9d7885c"
+URIs = "5c2747f8-b7ea-4ff2-ba2e-563bfd36b1d4"
 
 [compat]
+Base64 = "1.11.0"
+Dates = "1.11.0"
+HTTP = "1.10.19"
+JSON3 = "1.14.3"
+MD5 = "0.2.3"
+URIs = "1.6.1"
 julia = "1.10.10"
 
 [extras]
