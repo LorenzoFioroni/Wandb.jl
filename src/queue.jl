@@ -57,29 +57,29 @@ function queue_length(queue::OnlineQueue)::Int
     end
 end
 
+"""Get the current number of items in the queue."""
 function get_queue_length(run::Run)::Int
-    """Get the current number of items in the queue."""
     return queue_length(run.queue)
 end
 
+"""Set the minimum time (seconds) between requests in online mode."""
 function set_min_request_interval!(run::Run, min_interval::Float64)
-    """Set the minimum time (seconds) between requests in online mode."""
     if min_interval < 0
         throw(ArgumentError("min_interval must be non-negative"))
     end
     run.queue.min_interval = min_interval
 end
 
+"""Set the background check interval (seconds) in online mode."""
 function set_online_flush_interval!(run::Run, flush_interval::Float64)
-    """Set the background check interval (seconds) in online mode."""
     if flush_interval <= 0
         throw(ArgumentError("flush_interval must be positive"))
     end
     run.queue.flush_interval = flush_interval
 end
 
+"""Set the maximum number of log entries per upload in online mode."""
 function set_max_batch_size!(run::Run, max_batch_size::Int)
-    """Set the maximum number of log entries per upload in online mode."""
     if max_batch_size <= 0
         throw(ArgumentError("max_batch_size must be positive"))
     end

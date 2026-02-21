@@ -63,7 +63,7 @@ function new_run(
 end
 
 function update_config!(run::Run, session::Session; kwargs...)
-    url = "https://api.wandb.ai/graphql"
+    url = session.host * "/graphql"
 
     formatted_config = Dict(
         k => Dict("value" => v, "desc" => nothing) for (k, v) in kwargs
@@ -114,7 +114,7 @@ function finish!(run::Run, session::Session; exit_code::Int=0)
     # Allow some time for background tasks to finish
     sleep(1)
     
-    url = "https://api.wandb.ai/files/$(run.entity)/$(run.project)/$(run.name)/file_stream"
+    url = session.host * "/files/$(run.entity)/$(run.project)/$(run.name)/file_stream"
 
     payload = Dict(
         "exitcode" => exit_code,

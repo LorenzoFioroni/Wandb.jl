@@ -5,9 +5,9 @@ function get_offline_cache_file(config::OfflineConfig, run_name::String)::String
     return joinpath(config.cache_dir, "run_$(run_name)_history.jsonl")
 end
 
+"""Enable offline mode for a run with caching to local files."""
 function enable_offline_mode!(run::Run, cache_dir::String="./wandb_cache";
     flush_interval::Float64=30.0, auto_upload::Bool=true, session::Union{Session,Nothing}=nothing)
-    """Enable offline mode for a run with caching to local files."""
     stop_online_uploader(run)
     run.offline_config = OfflineConfig(cache_dir; flush_interval=flush_interval, auto_upload=auto_upload)
 
@@ -16,11 +16,9 @@ function enable_offline_mode!(run::Run, cache_dir::String="./wandb_cache";
     end
 end
 
+"""Disable offline mode for a run."""
 function disable_offline_mode!(run::Run; session::Union{Session,Nothing}=nothing)
-    """Disable offline mode for a run."""
-    if run.offline_config !== nothing
-        run.offline_config.enabled = false
-    end
+    stop_background_uploader(run)
     run.offline_config = nothing
     if session !== nothing
         start_online_uploader(run, session)
