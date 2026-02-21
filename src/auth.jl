@@ -30,7 +30,7 @@ function _update_netrc(
     uri = URIs.URI(machine)
     machine = isnothing(uri.host) ? machine : uri.host
     machine_line = "machine $machine"
-    lines = readlines(path)
+    lines = isfile(path) ? readlines(path) : String[]
     machine_index = findfirst(occursin(machine_line), lines)
     if isnothing(machine_index)
         remove && return
@@ -47,7 +47,7 @@ function _update_netrc(
         lines[machine_index+1] = "  login user"
         lines[machine_index+2] = "  password $password"
     end
-    write(path, join(lines, "\n"))
+    write(path, join(lines, "\n") * "\n")
 end
 
 function api_to_app_url(api_url::AbstractString)::String
@@ -70,10 +70,6 @@ function authorize_url(host)::String
     uri = URI(app_url)
 
     scheme = isnothing(uri.scheme) ? "https" : uri.scheme
-    netloc = uri.host
-    if !isnothing(uri.port)
-        netloc *= ":" * string(uri.port)
-    end
 
     result = URI(
         scheme=scheme,
@@ -95,6 +91,9 @@ function _get_netrc(path::String, host::String)
     machine_line = "machine $machine"
     machine_index = findfirst(occursin(machine_line), lines)
     if machine_index === nothing
+        return nothing
+    end
+    if machine_index + 2 > length(lines)
         return nothing
     end
     login_line = lines[machine_index+1]

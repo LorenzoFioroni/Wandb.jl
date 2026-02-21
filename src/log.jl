@@ -26,13 +26,13 @@ function log(run::Run, session::Session, data::Dict{String,<:Any})
     end
 end
 
+"""Non-blocking flush — spawns async task for upload."""
 function flush_batch_async!(run::Run, session::Session; max_batches::Int=1)
-    """Non-blocking flush - spawns async task for upload."""
     @async flush_batch_impl!(run, session; max_batches=max_batches)
 end
 
+"""Blocking flush — waits for upload to complete."""
 function flush_batch!(run::Run, session::Session; max_batches::Int=1)
-    """Blocking flush - waits for upload to complete."""
     flush_batch_impl!(run, session; max_batches=max_batches)
 end
 
@@ -63,7 +63,7 @@ function flush_batch_impl!(run::Run, session::Session; max_batches::Int=1)
 end
 
 function send_batch_to_server(run::Run, session::Session, batch_data::Vector{Dict{String,Any}}; offset::Union{Int,Nothing}=nothing)
-    url = "https://api.wandb.ai/files/$(run.entity)/$(run.project)/$(run.name)/file_stream"
+    url = session.host * "/files/$(run.entity)/$(run.project)/$(run.name)/file_stream"
 
     lines = [JSON3.write(entry) for entry in batch_data]
 
@@ -125,7 +125,7 @@ function stop_online_uploader(run::Run)
 end
 
 function upload_file!(run::Run, session::Session, file_paths::Vector{String})
-    url = "https://api.wandb.ai/graphql"
+    url = session.host * "/graphql"
 
     filenames = basename.(file_paths)
 
@@ -159,7 +159,7 @@ function upload_file!(run::Run, session::Session, file_paths::Vector{String})
                 "Content-Type" => "application/octet-stream",
                 "Content-MD5" => content_md5
             ]
-            final_put_url = startswith(upload_url, "/") ? "https://api.wandb.ai" * upload_url : upload_url
+            final_put_url = startswith(upload_url, "/") ? session.host * upload_url : upload_url
             put_response = HTTP.put(final_put_url, put_headers, file_content)
 
             if put_response.status == 200
@@ -198,19 +198,17 @@ end
 function stop_background_uploader(run::Run)
     if run.offline_config !== nothing && run.offline_config.upload_task !== nothing
         run.offline_config.enabled = false
-        # Give the task a moment to finish
-        sleep(0.1)
-        run.offline_config.enabled = true
+        run.offline_config.upload_task = nothing
     end
 end
 
+"""Manually flush any pending queued logs."""
 function manual_flush!(run::Run, session::Session)
-    """Manually flush any pending queued logs."""
     flush_batch!(run, session; max_batches=typemax(Int))
 end
 
+"""Upload all cached logs from local storage to the server."""
 function upload_cached_logs(run::Run, session::Session)
-    """Upload all cached logs from local storage to the server."""
     if run.offline_config === nothing
         throw(ErrorException("Offline mode is not enabled for this run"))
     end
