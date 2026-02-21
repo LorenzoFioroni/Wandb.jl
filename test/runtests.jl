@@ -147,3 +147,12 @@ end
     @test endswith(path, "run_myrun_history.jsonl")
     rm(cfg.cache_dir; recursive=true, force=true)
 end
+
+@testset "run finished flag" begin
+    run = Wandb.Run("id", "name", "proj", "entity")
+    @test run.finished == false
+
+    run.finished = true
+    dummy_session = Wandb.Session(repeat("a", 40))
+    @test_throws ErrorException Wandb.log(run, dummy_session, Dict{String,Any}("loss" => 0.1))
+end
