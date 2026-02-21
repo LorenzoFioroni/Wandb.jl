@@ -111,6 +111,9 @@ function finish!(run::Run, session::Session; exit_code::Int=0)
     stop_online_uploader(run)
     stop_background_uploader(run)
 
+    # Allow some time for background tasks to finish
+    sleep(1)
+    
     url = "https://api.wandb.ai/files/$(run.entity)/$(run.project)/$(run.name)/file_stream"
 
     payload = Dict(
@@ -126,7 +129,10 @@ function finish!(run::Run, session::Session; exit_code::Int=0)
     ]
 
     try
-        HTTP.post(url, headers, body)
+        resp = HTTP.post(url, headers, body)
+        if resp.status != 200
+            @warn "Failed to signal run completion, status code: $(resp.status), response: $(String(resp.body))"
+        end
     catch e
         throw(ArgumentError("Failed to signal run completion for $(run.id): $e"))
     end
