@@ -107,9 +107,21 @@ function finish!(run::Run, session::Session; exit_code::Int=0)
         @warn "Failed to flush remaining queued data: $e"
     end
 
+    # Upload any cached offline logs before signaling completion
+    if run.offline_config !== nothing
+        try
+            upload_cached_logs(run, session)
+        catch e
+            @warn "Failed to upload cached offline logs: $e"
+        end
+    end
+
     # Stop background uploaders if running
     stop_online_uploader(run)
     stop_background_uploader(run)
+
+    # Mark run as finished so subsequent log calls are rejected
+    run.finished = true
 
     # Allow some time for background tasks to finish
     sleep(1)

@@ -55,12 +55,13 @@ mutable struct Run
     offset::Int
     queue::OnlineQueue
     offline_config::Union{OfflineConfig,Nothing}
+    finished::Bool
 end
 
 function Run(id::String, name::String, project::String, entity::String)
-    return Run(id, name, project, entity, 0, OnlineQueue(), nothing)
+    return Run(id, name, project, entity, 0, OnlineQueue(), nothing, false)
 end
 
 function Run(id::String, name::String, project::String, entity::String, queue::OnlineQueue, offline_config::Union{OfflineConfig,Nothing}=nothing)
-    return Run(id, name, project, entity, 0, queue, offline_config)
+    return Run(id, name, project, entity, 0, queue, offline_config, false)
 end

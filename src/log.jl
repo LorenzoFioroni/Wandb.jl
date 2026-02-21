@@ -2,6 +2,9 @@
 export log, upload_file!, manual_flush!, upload_cached_logs
 
 function log(run::Run, session::Session, data::Dict{String,<:Any})
+    if run.finished
+        throw(ErrorException("Cannot log to a finished run"))
+    end
     current_timestamp = time()
 
     # Prepare log entry
