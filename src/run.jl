@@ -63,6 +63,9 @@ function new_run(
 end
 
 function update_config!(run::Run, session::Session; kwargs...)
+    if run.finished
+        throw(ErrorException("Cannot update config of a finished run"))
+    end
     url = session.host * "/graphql"
 
     formatted_config = Dict(
@@ -100,6 +103,13 @@ end
 
 
 function finish!(run::Run, session::Session; exit_code::Int=0)
+    # Mark run as finished so subsequent log/config calls are rejected
+    run.finished = true
+
+    # Stop background uploaders and wait for them to finish before doing the final flush
+    stop_online_uploader(run)
+    stop_background_uploader(run)
+
     # Flush any remaining queued data
     try
         flush_batch!(run, session)
@@ -116,16 +126,6 @@ function finish!(run::Run, session::Session; exit_code::Int=0)
         end
     end
 
-    # Stop background uploaders if running
-    stop_online_uploader(run)
-    stop_background_uploader(run)
-
-    # Mark run as finished so subsequent log calls are rejected
-    run.finished = true
-
-    # Allow some time for background tasks to finish
-    sleep(1)
-    
     url = session.host * "/files/$(run.entity)/$(run.project)/$(run.name)/file_stream"
 
     payload = Dict(
@@ -146,6 +146,6 @@ function finish!(run::Run, session::Session; exit_code::Int=0)
             @warn "Failed to signal run completion, status code: $(resp.status), response: $(String(resp.body))"
         end
     catch e
-        throw(ArgumentError("Failed to signal run completion for $(run.id): $e"))
+        throw(ErrorException("Failed to signal run completion for $(run.id): $e"))
     end
 end

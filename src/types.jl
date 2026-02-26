@@ -2,10 +2,10 @@
 # Session configuration
 export Session
 
-mutable struct Session
+struct Session
     api_key::String
     host::String
-    
+
     function Session(api_key::String; host::String="https://api.wandb.ai")
         check = _check_api_key(api_key)
         if !isnothing(check)
@@ -39,11 +39,12 @@ mutable struct OfflineConfig
     flush_interval::Float64  # seconds
     auto_upload::Bool
     upload_task::Union{Task,Nothing}
+    cache_lock::ReentrantLock  # protects the cache file
 
     function OfflineConfig(cache_dir::String; flush_interval::Float64=30.0, auto_upload::Bool=true)
         # Create cache directory if it doesn't exist
         mkpath(cache_dir)
-        new(true, cache_dir, flush_interval, auto_upload, nothing)
+        new(true, cache_dir, flush_interval, auto_upload, nothing, ReentrantLock())
     end
 end
 
@@ -52,16 +53,16 @@ mutable struct Run
     name::String
     project::String
     entity::String
-    offset::Int
+    offset::Threads.Atomic{Int}
     queue::OnlineQueue
     offline_config::Union{OfflineConfig,Nothing}
     finished::Bool
 end
 
 function Run(id::String, name::String, project::String, entity::String)
-    return Run(id, name, project, entity, 0, OnlineQueue(), nothing, false)
+    return Run(id, name, project, entity, Threads.Atomic{Int}(0), OnlineQueue(), nothing, false)
 end
 
 function Run(id::String, name::String, project::String, entity::String, queue::OnlineQueue, offline_config::Union{OfflineConfig,Nothing}=nothing)
-    return Run(id, name, project, entity, 0, queue, offline_config, false)
+    return Run(id, name, project, entity, Threads.Atomic{Int}(0), queue, offline_config, false)
 end
