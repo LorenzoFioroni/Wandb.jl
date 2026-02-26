@@ -6,7 +6,7 @@ A lightweight Julia interface for [Weights & Biases](https://wandb.ai/). Log met
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/yourusername/Wandb.jl")
+Pkg.add(url="https://github.com/LorenzoFioroni/Wandb.jl")
 ```
 
 ## Quick Start

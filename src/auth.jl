@@ -40,6 +40,15 @@ function _update_netrc(
         push!(lines, "  login user")
         push!(lines, "  password $password")
     elseif remove
+        # Validate block before removing to avoid corrupting non-standard .netrc files
+        if machine_index + 2 > length(lines)
+            return
+        end
+        login_line = lines[machine_index + 1]
+        password_line = lines[machine_index + 2]
+        if !startswith(strip(login_line), "login") || !startswith(strip(password_line), "password")
+            return
+        end
         # Remove existing entry
         deleteat!(lines, machine_index:machine_index+2)
     else
@@ -51,18 +60,24 @@ function _update_netrc(
 end
 
 function api_to_app_url(api_url::AbstractString)::String
-    if occursin("://api.wandb.test", api_url)
-        # dev mode
-        return strip(replace(api_url, "://api." => "://app."), '/')
-    elseif occursin("://api.wandb.", api_url)
-        # cloud
-        return strip(replace(api_url, "://api." => "://"), '/')
-    elseif occursin("://api.", api_url)
-        # onprem cloud
-        return strip(replace(api_url, "://api." => "://app."), '/')
+    uri = URIs.URI(string(api_url))
+    host = uri.host
+    if isnothing(host) || isempty(host)
+        return string(api_url)
     end
-    # wandb/local
-    return api_url
+
+    new_host = if startswith(host, "api.wandb.test")
+        replace(host, r"^api\." => "app.")  # dev mode: api.wandb.test → app.wandb.test
+    elseif startswith(host, "api.wandb.")
+        replace(host, r"^api\." => "")      # cloud: api.wandb.ai → wandb.ai
+    elseif startswith(host, "api.")
+        replace(host, r"^api\." => "app.")  # onprem: api.example.com → app.example.com
+    else
+        return string(api_url)              # wandb/local: no change
+    end
+
+    scheme = isnothing(uri.scheme) ? "https" : uri.scheme
+    return string(URIs.URI(scheme=scheme, host=new_host, port=uri.port, path=uri.path))
 end
 
 function authorize_url(host)::String
@@ -98,6 +113,9 @@ function _get_netrc(path::String, host::String)
     end
     login_line = lines[machine_index+1]
     password_line = lines[machine_index+2]
+    if !startswith(strip(login_line), "login") || !startswith(strip(password_line), "password")
+        return nothing
+    end
     login = strip(split(login_line)[end])
     password = strip(split(password_line)[end])
     return (login=login, password=password)
@@ -110,7 +128,7 @@ function login(
     if auth !== nothing
         println("Already logged in to Weights & Biases at $host")
         println("Username: $(auth.login)")
-        println("Run `wandb.logout()` to log out.")
+        println("Run `Wandb.logout()` to log out.")
         return Session(String(auth.password); host=host)
     end
 
@@ -137,7 +155,7 @@ function logout(
     auth = _get_netrc(path, host)
     if auth === nothing
         println("Not logged in to Weights & Biases at $host")
-        println("Run `wandb.login()` to log in.")
+        println("Run `Wandb.login()` to log in.")
         return
     end
     println("Logging out of Weights & Biases at $host")
