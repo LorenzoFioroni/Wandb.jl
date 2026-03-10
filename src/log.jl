@@ -127,7 +127,7 @@ function stop_online_uploader(run::Run)
     end
 end
 
-function upload_file!(run::Run, session::Session, file_paths::Vector{String})
+function upload_file!(run::Run, session::Session, file_paths::Vector{String}, verbose::Bool = false)
     url = session.host * "/graphql"
 
     filenames = basename.(file_paths)
@@ -165,7 +165,7 @@ function upload_file!(run::Run, session::Session, file_paths::Vector{String})
             final_put_url = startswith(upload_url, "/") ? session.host * upload_url : upload_url
             put_response = HTTP.put(final_put_url, put_headers, file_content)
 
-            if put_response.status == 200
+            if put_response.status == 200 && verbose
                 println("Successfully uploaded $(basename(file_path)) to run $(run.id)")
             end
         end
