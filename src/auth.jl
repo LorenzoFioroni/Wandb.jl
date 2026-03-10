@@ -104,13 +104,16 @@ function _get_netrc(path::String, host::String)
 end
 
 function login(
-    host::String="https://api.wandb.ai"
+    host::String="https://api.wandb.ai",
+    verbose::Bool=false
 )
     auth = _get_netrc(_get_netrc_file_path(), host)
     if auth !== nothing
-        println("Already logged in to Weights & Biases at $host")
-        println("Username: $(auth.login)")
-        println("Run `wandb.logout()` to log out.")
+        if verbose
+            println("Already logged in to Weights & Biases at $host")
+            println("Username: $(auth.login)")
+            println("Run `wandb.logout()` to log out.")
+        end
         return Session(String(auth.password); host=host)
     end
 
